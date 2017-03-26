@@ -72,9 +72,17 @@ public class Character : MonoBehaviour {
 
 		health += healthRegenPerSecond * Time.deltaTime;
 		health = Mathf.Min(health, 1);
-		foxAnimator.SetFloat("movementspeed", Mathf.Abs(rb.velocity.x));
 
-    }
+		foxAnimator.SetFloat("movementspeed", Mathf.Abs(rb.velocity.x));
+		foxAnimator.SetBool("Ground", IsOnGround());
+		foxAnimator.SetBool("Wall", !(IsOnGround() || IsInAir()));
+        if (!(IsOnGround() || IsInAir())) {
+			GoingLeft = collitionNormal().x > 0;
+		}else if(!IsOnGround()) {
+			GoingLeft = rb.velocity.x < 0;
+        }
+
+	}
 	public void Damage( float amount) {
 		health -= amount;
 
