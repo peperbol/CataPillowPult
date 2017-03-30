@@ -160,7 +160,7 @@ public class CameraFollow : MonoBehaviour {
 
 		if (ShouldCameraZoom) {
 			Rect targetBounds = TargetBoundsToCamBounds(GrowRectToAspect(RectContainingAllTargetsToFollow, cam.aspect));
-			Debug.Log(targetBounds);
+
 			cam.orthographicSize = Mathf.Lerp(cam.orthographicSize, targetBounds.height / 2, lerpValue);
 			Move(Vector2.Lerp(Vector2.zero,  targetBounds.center - MyPosition, lerpValue));
 		}

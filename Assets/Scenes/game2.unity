@@ -810,6 +810,11 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: df4bf51760baa4f4cbbfebe2154c6e65, type: 2}
   m_IsPrefabParent: 0
+--- !u!4 &440854893 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 4843475438519010, guid: ff24b5f674bb81c43a86c52d97e61d9f,
+    type: 2}
+  m_PrefabInternal: {fileID: 1754292479}
 --- !u!1001 &457007687
 Prefab:
   m_ObjectHideFlags: 0
@@ -957,7 +962,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 1605864588329002, guid: ff24b5f674bb81c43a86c52d97e61d9f, type: 2}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: ff24b5f674bb81c43a86c52d97e61d9f, type: 2}
@@ -6041,11 +6046,11 @@ Prefab:
     m_Modifications:
     - target: {fileID: 4797290177932490, guid: ff24b5f674bb81c43a86c52d97e61d9f, type: 2}
       propertyPath: m_LocalPosition.x
-      value: -20.58791
+      value: -44.7
       objectReference: {fileID: 0}
     - target: {fileID: 4797290177932490, guid: ff24b5f674bb81c43a86c52d97e61d9f, type: 2}
       propertyPath: m_LocalPosition.y
-      value: 3.069785
+      value: 4.4
       objectReference: {fileID: 0}
     - target: {fileID: 4797290177932490, guid: ff24b5f674bb81c43a86c52d97e61d9f, type: 2}
       propertyPath: m_LocalPosition.z
@@ -6076,10 +6081,21 @@ Prefab:
       propertyPath: respawnPoint
       value: 
       objectReference: {fileID: 1742050239}
-    - target: {fileID: 4797290177932490, guid: ff24b5f674bb81c43a86c52d97e61d9f, type: 2}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
+    - target: {fileID: 114051833478636470, guid: ff24b5f674bb81c43a86c52d97e61d9f,
+        type: 2}
+      propertyPath: weight
+      value: 0.3
       objectReference: {fileID: 0}
+    - target: {fileID: 114051833478636470, guid: ff24b5f674bb81c43a86c52d97e61d9f,
+        type: 2}
+      propertyPath: gravityAcceleration
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 114051833478636470, guid: ff24b5f674bb81c43a86c52d97e61d9f,
+        type: 2}
+      propertyPath: visual
+      value: 
+      objectReference: {fileID: 440854893}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: ff24b5f674bb81c43a86c52d97e61d9f, type: 2}
   m_IsPrefabParent: 0

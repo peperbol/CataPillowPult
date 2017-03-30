@@ -115,7 +115,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1605864588329002}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -21.32, y: 2.73, z: 0}
+  m_LocalPosition: {x: -44.7, y: 4.4, z: 0}
   m_LocalScale: {x: -1, y: 1, z: 1}
   m_Children:
   - {fileID: 4843475438519010}
@@ -186,9 +186,9 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 0.3
-  m_LinearDrag: 0.05
-  m_AngularDrag: 0.05
-  m_GravityScale: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0
+  m_GravityScale: 0
   m_Material: {fileID: 0}
   m_Interpolate: 0
   m_SleepingMode: 1
@@ -272,18 +272,20 @@ MonoBehaviour:
   playerLayer:
     m_LayerIndex: 8
   healthRegenPerSecond: 0.2
-  moveForce: 25
-  airMoveForce: 10
-  jumpForce: 100
-  wallForce: 130
-  throwForce: 300
-  maxVelocity: 15
-  walkdrag: 0
-  standDrag: 100
   pillowAttack: {fileID: 95861608470517818}
   foxAnimator: {fileID: 95116900614190760}
   respawnPoint: {fileID: 0}
   throwPressLength: 0.2
+  weight: 0.15
+  walkAcceleration: 150
+  airMoveAcceleration: 50
+  jumpAcceleration: 800
+  wallJumpAcceleration: 1200
+  gravityAcceleration: 20
+  maxWalkVelocity: 15
+  maxFlyVelocity: 30
+  maxWallVelocity: 70
+  throwForce: 300
 --- !u!212 &212674010544898654
 SpriteRenderer:
   m_ObjectHideFlags: 1

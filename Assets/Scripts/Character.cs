@@ -13,28 +13,45 @@ public class Character : MonoBehaviour {
 	public Player player;
 	public Transform pillowSocket;
 	public SingleUnityLayer playerLayer;
-	Pillow pillow;
-	float health = 1;
+	public Transform visual;
 	public float healthRegenPerSecond = 0.45f;
 
-	public float moveForce = 5;
-	public float airMoveForce = 5;
-	public float jumpForce = 50;
-	public float wallForce = 50;
-	public float throwForce = 50;
-	public float maxVelocity = 10;
-	public float walkdrag =  0.2f;
-	public float standDrag = 70f;
 	public Animator pillowAttack;
 	public Animator foxAnimator;
 	public Transform respawnPoint;
-	PhysicsMaterial2D physicsMaterial;
-
-	Dictionary<Collider2D, Collision2D> collitions = new Dictionary<Collider2D, Collision2D>();
-	Rigidbody2D rb;
-    float actionPressLength;
 
 	public float throwPressLength;
+
+	[Header("Physics")]
+	public float weight = 0.3f;
+	public float walkAcceleration = 5;
+	public float airMoveAcceleration = 5;
+	public float jumpAcceleration = 50;
+	public float wallJumpAcceleration = 50;
+	public float gravityAcceleration = 9.81f;
+	public float maxWalkVelocity = 10;
+	public float maxFlyVelocity = 70f;
+	public float maxWallVelocity = 70f;
+
+	public float throwForce = 50;
+
+	Dictionary<Collider2D, Collision2D> collisions = new Dictionary<Collider2D, Collision2D>();
+	Rigidbody2D rb;
+	float actionPressLength;
+	float forwardY;
+	Pillow pillow;
+	float health = 1;
+
+	public float GetForce(float acceleration) {
+		return acceleration * weight;
+	}
+	public Vector2 GetForce(Vector2 acceleration) {
+		return acceleration * weight;
+	}
+	public Vector2 GetDragForce(float maxSpeed, float acceleration) {
+		return GetForce(rb.velocity * (-acceleration / maxSpeed));
+	}
+
 
 	void Start() {
 		rb = GetComponent<Rigidbody2D>();
@@ -44,30 +61,87 @@ public class Character : MonoBehaviour {
 		}
 		Respawn();
 
-		physicsMaterial = new PhysicsMaterial2D();
-		rb.sharedMaterial = physicsMaterial;
-    }
-	void Respawn() {
-		transform.position = respawnPoint.position;
-		rb.velocity = Vector3.zero;
-    }
+	}
+
+	//fixedupdate
+	void ApplyFixedMoveForces(float walkDirection) {
+		if (IsOnGround()) {
+			Vector2 force = GetForce(walkDirection * Vector2.right * walkAcceleration);
+            rb.AddForce(force);
+
+			//forces on object
+			foreach (var c in collisions) {
+				if (c.Value.contacts[0].normal.y > 0.4f) { //ground
+					Rigidbody2D body = c.Value.collider.GetComponent<Rigidbody2D>();
+					if (body) {
+						body.AddForceAtPosition(-force/4, c.Value.contacts[0].point);
+					}
+				}
+			}
+		}
+		else if (IsInAir()) {
+			rb.AddForce(GetForce(walkDirection * Vector2.right * airMoveAcceleration));
+		} else if (IsOnWall()) {
+
+		}
+	}
+
+	void ApplyGravity() {
+		rb.AddForce(GetForce(gravityAcceleration)* Vector2.down);
+	}
+	void ApplyDrag() {
+        if (IsOnGround()) {
+			rb.AddForce(GetDragForce(maxWalkVelocity, walkAcceleration));
+		}
+		else if (IsInAir()) {
+			rb.AddForce(
+					GetDragForce(maxFlyVelocity,
+					new Vector2(airMoveAcceleration, gravityAcceleration).magnitude)
+				);
+		}
+		else if (IsOnWall()) {
+			rb.AddForce(GetDragForce(maxWalkVelocity, gravityAcceleration));
+		}
+		else {
+			Debug.LogWarning("NOT ON WALL AIR OR GROUND! WHATS HAPPENING???");
+		}
+	}
+	//renderupdate
+	void ApplyJumpForces() {
+		Vector2 WallNormal = (IsOnWall()) ? collitionNormal() : Vector2.zero;
+		Vector2 force =
+				GetForce(jumpAcceleration * Vector2.up) +
+				GetForce(wallJumpAcceleration * WallNormal);
+        rb.AddForce(
+			 force
+			);
+
+		//forces on object
+		if (IsOnWall()) {
+			foreach (var c in collisions) {
+				Rigidbody2D body = c.Value.collider.GetComponent<Rigidbody2D>();
+				if (body) {
+					body.AddForceAtPosition(-force, c.Value.contacts[0].point);
+                }
+			}
+		}
+		
+	}
 
 	void FixedUpdate() {
-		FixedMove();
-		if (HorizontalInput != 0) {
-			GoingLeft = HorizontalInput < 0;
-		}
 
-		physicsMaterial.friction = (Mathf.Abs(HorizontalInput) > 0.5) ? walkdrag : standDrag;
-		//rb.sharedMaterial = physicsMaterial;
-	}
+		//Debug.Log(IsOnGround() ? "ground" : (IsInAir() ? "air" : "wall"));
+		ApplyFixedMoveForces(HorizontalInput);
+		ApplyGravity();
+		ApplyDrag();
+    }
 	void Update() {
-		List< Collider2D > toRemove = collitions.Where(e => !e.Key.enabled || e.Key.gameObject.layer == playerLayer.LayerIndex).Select(e=>e.Key).ToList();
+		List<Collider2D> toRemove = collisions.Where(e => !e.Key.enabled || e.Key.gameObject.layer == playerLayer.LayerIndex).Select(e => e.Key).ToList();
 		for (int i = 0; i < toRemove.Count; i++) {
-			collitions.Remove(toRemove[i]);
-        }
-        Action();
-        if (!IsInAir())
+			collisions.Remove(toRemove[i]);
+		}
+		Action();
+		if (!IsInAir())
 			JumpCheck();
 
 		health += healthRegenPerSecond * Time.deltaTime;
@@ -75,40 +149,55 @@ public class Character : MonoBehaviour {
 
 		foxAnimator.SetFloat("movementspeed", Mathf.Abs(rb.velocity.x));
 		foxAnimator.SetBool("Ground", IsOnGround());
-		foxAnimator.SetBool("Wall", !(IsOnGround() || IsInAir()));
-        if (!(IsOnGround() || IsInAir())) {
-			GoingLeft = collitionNormal().x > 0;
-		}else if(!IsOnGround()) {
+		foxAnimator.SetBool("Wall", IsOnWall());
+
+		if (IsOnGround()) {
+
+			if (Mathf.Abs(rb.velocity.x) > 0.2f) {
+				GoingLeft = rb.velocity.x < 0;
+
+			}
+
+			ForwardVector = Vector2.right;
+
+			visual.right =  (GoingLeft) ? -ForwardVector : ForwardVector;
+		}
+		else if (IsInAir()) {
 			GoingLeft = rb.velocity.x < 0;
-        }
+			ForwardVector = rb.velocity;
+
+			visual.right = Vector2.Lerp(visual.right, (GoingLeft) ? -ForwardVector : ForwardVector, 0.2f);
+		}
+		else if (IsOnWall()) {
+			GoingLeft = collitionNormal().x > 0;
+
+			ForwardVector = -collitionNormal();
+
+			visual.right = (GoingLeft) ? -ForwardVector : ForwardVector;
+		}
+
 
 	}
-	public void Damage( float amount) {
+
+	float HorizontalInput { get { return Input.GetAxis("Horizontal" + (int)player); } }
+	public void Damage(float amount) {
 		health -= amount;
 
 		Debug.Log("dmg: " + health);
-        if (health < 0) {
+		if (health < 0) {
 			Respawn();
 			health = 1;
 		}
-    }
-	void FixedMove() {
-		if (rb.velocity.magnitude < maxVelocity) {
-			if (IsOnGround() || IsInAir()) {
-				rb.AddForce(Vector2.right * HorizontalInput * (IsOnGround() ? moveForce : airMoveForce));
-			}
-		}
-    }
-	float HorizontalInput { get { return Input.GetAxis("Horizontal" + (int)player); } }
+	}
 
 	void Action() {
-        if (!HeldPillow) {
+		if (!HeldPillow) {
 
 
-			if (Input.GetButtonDown("Action" + (int)player) && collitions.Any(e => e.Value.collider.GetComponent<Pillow>())) {
+			if (Input.GetButtonDown("Action" + (int)player) && collisions.Any(e => e.Value.collider.GetComponent<Pillow>())) {
 				Debug.Log("takey");
-				collitions.Where(e => e.Value.collider.GetComponent<Pillow>()).First().Value.collider.GetComponent<Pillow>().Take(this);
-            }
+				collisions.Where(e => e.Value.collider.GetComponent<Pillow>()).First().Value.collider.GetComponent<Pillow>().Take(this);
+			}
 		}
 		else {
 			Hit();
@@ -124,16 +213,17 @@ public class Character : MonoBehaviour {
 			HeldPillow.Drop();
 		}
 	}
-	void Hit() { 
+
+	void Hit() {
 
 		pillowAttack.SetBool("Attack", false);
 
-		if (Input.GetButtonDown(ActionButton) ){
+		if (Input.GetButtonDown(ActionButton)) {
 			actionPressLength = 0;
 		}
 		if (Input.GetButton(ActionButton)) {
 			actionPressLength += Time.deltaTime;
-        }
+		}
 
 		if (Input.GetButtonUp(ActionButton)) {
 			if (actionPressLength > throwPressLength) {
@@ -141,59 +231,45 @@ public class Character : MonoBehaviour {
 				pillow.Drop();
 				pillow.isAttacking = true;
 				pillow.GetComponent<Rigidbody2D>().AddForce((GoingLeft ? 1 : -1) * Vector2.left * throwForce);
-            }
+			}
 			else {
 				pillowAttack.SetBool("Attack", true);
 			}
 
 			actionPressLength = 0;
 		}
-    }
+	}
 	void JumpCheck() {
 		Vector2 WallNormal = collitionNormal();
 		WallNormal.y = 0;
 		Debug.DrawRay(transform.position, WallNormal, Color.green);
 		if (Input.GetButtonDown("Jump" + (int)player)/*|| Input.GetButtonUp("Jump" + (int)player)*/) {
-			Jump();
+			ApplyJumpForces();
 		}
 	}
 
-	void Jump() {
-		Vector2 WallNormal = (IsOnGround()) ? Vector2.zero :collitionNormal();
-		WallNormal.y = 0;
-		rb.AddForce(jumpForce * Vector2.up + wallForce * WallNormal);
-	}
+
 	Vector2 collitionNormal() {
-		if (collitions.Count == 0) return Vector2.zero;
-		return collitions.Select(e => e.Value.contacts[0].normal).Aggregate((p, t) => p + t).normalized;
+		if (collisions.Count == 0) return Vector2.zero;
+		return collisions.Select(e => e.Value.contacts[0].normal).Aggregate((p, t) => p + t).normalized;
 	}
 
-	bool IsOnGround() {
-		return collitionNormal().y > 0.4;
-	}
-	bool IsInAir() {
-		return collitions.Count == 0;
-	}
-
-	bool GoingLeft {
-		get {
-			return transform.localScale.x < 0;
-        }
-		set {
-			transform.localScale = new Vector3((value) ? -1 : 1, 1, 1);
-		}
-	}
 	public void OnCollisionEnter2D(Collision2D collision) {
 		try {
-			collitions.Add(collision.collider, collision);
+			collisions.Add(collision.collider, collision);
 		}
 		catch (Exception) { }
 	}
 
 	public void OnCollisionExit2D(Collision2D collision) {
-		collitions.Remove(collision.collider);
+		collisions.Remove(collision.collider);
 	}
-	
+
+	void Respawn() {
+		transform.position = respawnPoint.position;
+		rb.velocity = Vector3.zero;
+	}
+
 	public Pillow HeldPillow {
 		get {
 			return pillow;
@@ -202,5 +278,34 @@ public class Character : MonoBehaviour {
 			pillow = value;
 		}
 	}
-	
+
+
+	bool IsOnGround() {
+		return collitionNormal().y > 0.4;
+	}
+	bool IsInAir() {
+		return collisions.Count == 0 || collisions.All(e=>e.Value.contacts[0].normal.y <-0.4f);
+	}
+
+	bool IsOnWall() {
+		return !(IsOnGround() || IsInAir());
+	}
+
+
+	bool GoingLeft {
+		get {
+			return transform.localScale.x < 0;
+		}
+		set {
+			transform.localScale = new Vector3((value) ? -1 : 1, 1, 1);
+		}
+	}
+	Vector2 ForwardVector {
+		get {
+			return new Vector2(Mathf.Cos(Mathf.Asin(forwardY))* ((GoingLeft)?-1:1), forwardY);
+        }
+		set {
+			forwardY = value.normalized.y;
+        }
+	}
 }
