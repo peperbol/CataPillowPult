@@ -9,6 +9,11 @@ public class Character : MonoBehaviour {
 		Player1 = 1,
 		Player2 = 2
 	}
+	public enum CollisionState {
+		WALL,
+		GROUND,
+		AIR
+	}
 
 	public Player player;
 	public Transform pillowSocket;
@@ -41,6 +46,7 @@ public class Character : MonoBehaviour {
 	float forwardY;
 	Pillow pillow;
 	float health = 1;
+	CollisionState previousState;
 
 	public float GetForce(float acceleration) {
 		return acceleration * weight;
@@ -67,30 +73,31 @@ public class Character : MonoBehaviour {
 	void ApplyFixedMoveForces(float walkDirection) {
 		if (IsOnGround()) {
 			Vector2 force = GetForce(walkDirection * Vector2.right * walkAcceleration);
-            rb.AddForce(force);
+			rb.AddForce(force);
 
 			//forces on object
 			foreach (var c in collisions) {
 				if (c.Value.contacts[0].normal.y > 0.4f) { //ground
 					Rigidbody2D body = c.Value.collider.GetComponent<Rigidbody2D>();
 					if (body) {
-						body.AddForceAtPosition(-force/4, c.Value.contacts[0].point);
+						body.AddForceAtPosition(-force / 4, c.Value.contacts[0].point);
 					}
 				}
 			}
 		}
 		else if (IsInAir()) {
 			rb.AddForce(GetForce(walkDirection * Vector2.right * airMoveAcceleration));
-		} else if (IsOnWall()) {
+		}
+		else if (IsOnWall()) {
 
 		}
 	}
 
 	void ApplyGravity() {
-		rb.AddForce(GetForce(gravityAcceleration)* Vector2.down);
+		rb.AddForce(GetForce(gravityAcceleration) * Vector2.down);
 	}
 	void ApplyDrag() {
-        if (IsOnGround()) {
+		if (IsOnGround()) {
 			rb.AddForce(GetDragForce(maxWalkVelocity, walkAcceleration));
 		}
 		else if (IsInAir()) {
@@ -112,7 +119,7 @@ public class Character : MonoBehaviour {
 		Vector2 force =
 				GetForce(jumpAcceleration * Vector2.up) +
 				GetForce(wallJumpAcceleration * WallNormal);
-        rb.AddForce(
+		rb.AddForce(
 			 force
 			);
 
@@ -122,10 +129,10 @@ public class Character : MonoBehaviour {
 				Rigidbody2D body = c.Value.collider.GetComponent<Rigidbody2D>();
 				if (body) {
 					body.AddForceAtPosition(-force, c.Value.contacts[0].point);
-                }
+				}
 			}
 		}
-		
+
 	}
 
 	void FixedUpdate() {
@@ -134,15 +141,15 @@ public class Character : MonoBehaviour {
 		ApplyFixedMoveForces(HorizontalInput);
 		ApplyGravity();
 		ApplyDrag();
-    }
+
+
+	}
 	void Update() {
 		List<Collider2D> toRemove = collisions.Where(e => !e.Key.enabled || e.Key.gameObject.layer == playerLayer.LayerIndex).Select(e => e.Key).ToList();
 		for (int i = 0; i < toRemove.Count; i++) {
 			collisions.Remove(toRemove[i]);
 		}
 		Action();
-		if (!IsInAir())
-			JumpCheck();
 
 		health += healthRegenPerSecond * Time.deltaTime;
 		health = Mathf.Min(health, 1);
@@ -150,8 +157,14 @@ public class Character : MonoBehaviour {
 		foxAnimator.SetFloat("movementspeed", Mathf.Abs(rb.velocity.x));
 		foxAnimator.SetBool("Ground", IsOnGround());
 		foxAnimator.SetBool("Wall", IsOnWall());
+		foxAnimator.SetBool("Jump", false);
 
+		if (!IsInAir())
+			JumpCheck();
+
+		Debug.Log(IsOnGround() ? "ground" : (IsInAir() ? "air" : "wall"));
 		if (IsOnGround()) {
+
 
 			if (Mathf.Abs(rb.velocity.x) > 0.2f) {
 				GoingLeft = rb.velocity.x < 0;
@@ -160,13 +173,36 @@ public class Character : MonoBehaviour {
 
 			ForwardVector = Vector2.right;
 
-			visual.right =  (GoingLeft) ? -ForwardVector : ForwardVector;
+			if (rb.velocity.y <= 0) {
+				visual.right = (GoingLeft) ? -ForwardVector : ForwardVector;
+				transform.position = transform.position.SetY(collisions.Select(e => e.Value.contacts[0].point.y).Min());
+			}
+
+
+			if (previousState == CollisionState.WALL) {
+				transform.position = transform.position.ChangeX(
+					x => x + ((collitionNormal().x <0) ? 1 : -1) * ((visual.GetComponent<BoxCollider2D>().size.x / 2) + visual.transform.localPosition.x )
+					);
+			}
+
+
+			previousState = CollisionState.GROUND;
 		}
 		else if (IsInAir()) {
 			GoingLeft = rb.velocity.x < 0;
+
 			ForwardVector = rb.velocity;
 
-			visual.right = Vector2.Lerp(visual.right, (GoingLeft) ? -ForwardVector : ForwardVector, 0.2f);
+			visual.right = Vector2.Lerp(visual.right, (GoingLeft) ? -ForwardVector : ForwardVector, 0.1f);
+
+
+			if (previousState == CollisionState.WALL) {
+				transform.position = transform.position.ChangeX(
+					x => x + ((GoingLeft)?1:-1) * ((visual.GetComponent<BoxCollider2D>().size.x / 2) + visual.transform.localPosition.x)
+					);
+			}
+
+			previousState = CollisionState.AIR;
 		}
 		else if (IsOnWall()) {
 			GoingLeft = collitionNormal().x > 0;
@@ -174,8 +210,18 @@ public class Character : MonoBehaviour {
 			ForwardVector = -collitionNormal();
 
 			visual.right = (GoingLeft) ? -ForwardVector : ForwardVector;
-		}
 
+			if (previousState != CollisionState.WALL) {
+				visual.right = (GoingLeft) ? -ForwardVector : ForwardVector;
+				transform.position = transform.position.SetX(collisions.Select(
+					e => e.Value.contacts[0].point.x
+				).Aggregate(
+					(p, n) => (GoingLeft) ? ((p > n) ? p : n) : ((p < n) ? p : n)
+				));
+			}
+
+			previousState = CollisionState.WALL;
+		}
 
 	}
 
@@ -245,6 +291,8 @@ public class Character : MonoBehaviour {
 		Debug.DrawRay(transform.position, WallNormal, Color.green);
 		if (Input.GetButtonDown("Jump" + (int)player)/*|| Input.GetButtonUp("Jump" + (int)player)*/) {
 			ApplyJumpForces();
+
+			foxAnimator.SetBool("Jump", true);
 		}
 	}
 
@@ -284,7 +332,7 @@ public class Character : MonoBehaviour {
 		return collitionNormal().y > 0.4;
 	}
 	bool IsInAir() {
-		return collisions.Count == 0 || collisions.All(e=>e.Value.contacts[0].normal.y <-0.4f);
+		return !IsOnGround() && collisions.Where(e=>!e.Value.collider.GetComponent<Pillow>()).Count() == 0 || collisions.All(e => e.Value.contacts[0].normal.y < -0.4f);
 	}
 
 	bool IsOnWall() {
@@ -302,10 +350,10 @@ public class Character : MonoBehaviour {
 	}
 	Vector2 ForwardVector {
 		get {
-			return new Vector2(Mathf.Cos(Mathf.Asin(forwardY))* ((GoingLeft)?-1:1), forwardY);
-        }
+			return new Vector2(Mathf.Cos(Mathf.Asin(forwardY)) * ((GoingLeft) ? -1 : 1), forwardY);
+		}
 		set {
 			forwardY = value.normalized.y;
-        }
+		}
 	}
 }

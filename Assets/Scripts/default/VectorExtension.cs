@@ -17,7 +17,7 @@ public static class VectorExtension {
 
     public static Vector3 SetY(this Vector3 parent, float newY)
     {
-        return new Vector3(parent.y, newY, parent.z);
+        return new Vector3(parent.x, newY, parent.z);
     }
 
     public static Vector3 SetZ(this Vector3 parent, float newZ)

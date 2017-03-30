@@ -37,6 +37,8 @@ GameObject:
   - component: {fileID: 4843475438519010}
   - component: {fileID: 212674010544898654}
   - component: {fileID: 95116900614190760}
+  - component: {fileID: 61497736643245814}
+  - component: {fileID: 61314616534350278}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -54,11 +56,9 @@ GameObject:
   - component: {fileID: 4797290177932490}
   - component: {fileID: 33707835037087140}
   - component: {fileID: 23150662339144798}
-  - component: {fileID: 61903800760068646}
   - component: {fileID: 114051833478636470}
   - component: {fileID: 50211996608730000}
   - component: {fileID: 233803145640332380}
-  - component: {fileID: 61218692409104446}
   m_Layer: 9
   m_Name: Character
   m_TagString: Untagged
@@ -100,8 +100,8 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1795533344883468}
-  m_LocalRotation: {x: -0, y: -0, z: -0.9526019, w: 0.30421966}
-  m_LocalPosition: {x: 1.45, y: 0.84, z: 0}
+  m_LocalRotation: {x: -0, y: 0, z: -0.9526019, w: 0.30421966}
+  m_LocalPosition: {x: 1.4500008, y: 1.5010004, z: 0}
   m_LocalScale: {x: -1, y: 1, z: 1}
   m_Children:
   - {fileID: 4239122430793622}
@@ -115,7 +115,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1605864588329002}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -44.7, y: 4.4, z: 0}
+  m_LocalPosition: {x: -44.7, y: 4.106, z: 0}
   m_LocalScale: {x: -1, y: 1, z: 1}
   m_Children:
   - {fileID: 4843475438519010}
@@ -130,7 +130,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1525682529149210}
   m_LocalRotation: {x: -0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.08523369, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.66100025, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4797290177932490}
@@ -194,26 +194,12 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 4
---- !u!61 &61218692409104446
+--- !u!61 &61314616534350278
 BoxCollider2D:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1605864588329002}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 6200000, guid: 27e24caa48348fa4d82fe6c1112407f9, type: 2}
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_Offset: {x: 0, y: 0.4907174}
-  serializedVersion: 2
-  m_Size: {x: 2.47955, y: 0.10474491}
---- !u!61 &61903800760068646
-BoxCollider2D:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1605864588329002}
+  m_GameObject: {fileID: 1525682529149210}
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
@@ -222,6 +208,20 @@ BoxCollider2D:
   m_Offset: {x: 0, y: -0.09897804}
   serializedVersion: 2
   m_Size: {x: 2.5204546, y: 1.1156521}
+--- !u!61 &61497736643245814
+BoxCollider2D:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1525682529149210}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 6200000, guid: 27e24caa48348fa4d82fe6c1112407f9, type: 2}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_Offset: {x: 0, y: 0.4907174}
+  serializedVersion: 2
+  m_Size: {x: 2.47955, y: 0.10474491}
 --- !u!95 &95116900614190760
 Animator:
   serializedVersion: 3
@@ -271,17 +271,18 @@ MonoBehaviour:
   pillowSocket: {fileID: 4239122430793622}
   playerLayer:
     m_LayerIndex: 8
+  visual: {fileID: 4843475438519010}
   healthRegenPerSecond: 0.2
   pillowAttack: {fileID: 95861608470517818}
   foxAnimator: {fileID: 95116900614190760}
   respawnPoint: {fileID: 0}
   throwPressLength: 0.2
-  weight: 0.15
+  weight: 0.3
   walkAcceleration: 150
   airMoveAcceleration: 50
   jumpAcceleration: 800
   wallJumpAcceleration: 1200
-  gravityAcceleration: 20
+  gravityAcceleration: 25
   maxWalkVelocity: 15
   maxFlyVelocity: 30
   maxWallVelocity: 70
